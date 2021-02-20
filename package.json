@@ -1,0 +1,16 @@
+{
+  "name": "media_shuttle_components",
+  "version": "1.0.0",
+  "description": "Javascript functions for interacting with Media Shuttle API",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Scott Reynolds",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "dotenv": "^8.2.0"
+  }
+}
