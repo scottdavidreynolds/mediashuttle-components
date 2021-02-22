@@ -2,6 +2,7 @@ require('dotenv').config()
 const axios = require('axios');
 const constants = require('./constants');
 
+// https://app.swaggerhub.com/apis-docs/Signiant/MediaShuttle/
 // Portals Endpoints
 
 exports.getPortals = async (portalUrl) => {
