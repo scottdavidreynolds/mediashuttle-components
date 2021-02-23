@@ -1,5 +1,1 @@
-const mediashuttle = require("./components/mediashuttle")
-
-modules.exports= { 
-    mediashuttle
-}
+module.exports.mediashuttle = require("./components/mediashuttle")
