@@ -17,9 +17,9 @@ exports.getPortals = async (portalUrl) => {
       params: { url: portalUrl },
       headers: { Authorization: constants.MS_API_KEY }
    }).catch(error => {
-      return (error)
+      return {error: error.response.statusText}
    })
-   return (portals.data.items)
+   return {data: portals.data.items}
 }
 
 exports.getPortalsUsers = async (portalId) => {
@@ -28,9 +28,9 @@ exports.getPortalsUsers = async (portalId) => {
       baseURL: constants.apiUrl + '/portals/' + portalId + '/users',
       headers: { Authorization: constants.MS_API_KEY }
    }).catch(error => {
-      return (error)
+      return {error: error.response.statusText}
    })
-   return (portalsUsers.data.items)
+   return {data: portalsUsers.data.items}
 }
 
 // System-to-Person
@@ -43,9 +43,9 @@ exports.postPortalsPackages = async (portalId) => {
       url: portalId + '/packages',
       headers: { Authorization: constants.MS_API_KEY }
    }).catch(error => {
-      return (error.response.data)
+      return {error: error.response.statusText}
    })
-   return (packageId)
+   return {data: packageId}
 }
 
 // Retrieve package details
@@ -55,72 +55,87 @@ exports.getPortalsPackages = async (portalId, packageId) => {
       baseURL: constants.apiUrl + '/portals/' + portalId + '/packages/' + packageId,
       headers: { Authorization: constants.MS_API_KEY }
    }).catch(error => {
-      return (error)
+      return {error: error.response.statusText}
    })
-   return (portalsPackages.data)
+   return {data: portalsPackages.data}
 }
 
 // Add files to a package
 exports.putPortalsPackagesFiles = async (portalId, packageId, files) => {
-   let files = await axios({
+   let fileResults = await axios({
       method: 'PUT',
       baseURL: constants.apiUrl + '/portals/' + portalId + '/packages/' + packageId + '/files',
       headers: { Authorization: constants.MS_API_KEY },
       data: { files }
    }).catch(error => {
-      return (error.response.data)
+      return {error: error.response.statusText}
    })
-   return (files)
+   return {data: fileResults}
 }
 
 
 // Generate webtoken for upload or download
 exports.generateWebToken = async (params) => {
 
-   let { portalId, portalUrl, packageId, senderEmail, grants, expiration, path, files, webhook } = params;
+   let { portalId, portalUrl, packageId, userEmail, grants, expiration, destinationPath, files, webhook } = params;
 
-   if (!portalId || !portalUrl) {
+   if (!portalId && !portalUrl) {
       console.log('error: portalId or portalUrl is required')
       return ('error: portalId or portalUrl is required')
    }
-   if (!senderEmail) {
-      console.log('error: senderEmail required')
-      return ('error: senderEmail required')
+   
+   if (!userEmail) {
+      console.log('error: user email required')
    }
-   if (!path) {
-      console.log('error: path required')
-      return ('error: path required')
+   
+   if (!destinationPath) {
+      destinationPath = '/signiant'
    }
+   
    if (!expiration) {
       console.log('error: expiration required')
-      return ({ error: 'expiration required' })
    }
+   
+   if (!portalId) {
+      try {
+         portalDetails = await exports.getPortals(portalUrl)
+         portalId = portalDetails[0].id
+      } catch (error) {
+         return ({ error })
+      }
+   }
+   
+   if (!packageId) {
+      try {
+         packageIdDetails = await exports.postPortalsPackages(portalId)
+         packageId = packageIdDetails.data.id
+      } catch (error) {
+         return ({ error })
+      }
+   }
+   
    if (grants === ['download'] && !files) {
       console.log('error: file list required for download')
-      return ({ error: 'file list required for download' })
-   }
-   if (!portalId) {
-      portalId = await exports.getPortals(portalUrl).items[0].id
-   }
-
-   if (!packageId) {
-      packageId = await exports.postPortalsPackages(portalId).id
    }
 
    if (grants[0] === "download") {
-      let addFilesResult = await exports.putPortalsPackagesFiles(portalId, packageId, files)
+      try {
+         await exports.putPortalsPackagesFiles(portalId, packageId, files)
+      } catch (error) {
+         return ({ error })
+      }
    }
 
    let options = {
       method: 'POST',
-      baseURL: config.apiUrl + '/portals/',
+      baseURL: constants.apiUrl + '/portals/',
       url: portalId + '/packages/' + packageId + '/tokens',
-      headers: { Authorization: apiKey },
+      headers: { Authorization: constants.MS_API_KEY },
       data: {
          user: { email: userEmail },
          expiresOn: expiration,
-         destinationPath: '/path',
-         grants: grants,
+         destinationPath,
+         grants,
          notifications: [
             {
                type: 'webhook',
@@ -130,33 +145,18 @@ exports.generateWebToken = async (params) => {
       }
    }
 
-   let webToken = await axios(options)
-      .then(data => {
-         return ({ webToken: data.data.url })
-      })
-      .catch(error => {
-         console.log(error)
-         return ({ error })
-      })
-   return webToken
+   let url;
+   try {
+      await axios(options)
+         .then(data => {
+            url = data.data.url
+         })
+   } catch (error) {
+      return {error: error.response.statusText}
+
+   }
+   return {data: url}
 }
-
-   // Load the config
-
-   // const { apiKey, portalUrl, senderEmail, grants, expirationSeconds, path, files, webhook } = require('../client/src/config.json')
-
-   // let expiration = new Date()
-   // expiration.setSeconds(expiration.getSeconds() + expirationSeconds);
-
-   // generateToken = async () => {
-   //    let transferWebToken = await generateWebToken(
-   //       apiKey, portalUrl, senderEmail, grants, expiration, path, files, webhook
-   //    )
-   //    console.log('TransferWebToken Object', transferWebToken)
-   // }
-
-
-
 
 //Subscriptions Endpoints
 
