@@ -62,7 +62,7 @@ const EgenerateWebToken = async (params) => {
    console.log(results)
 }
 
-// EgetPortals("wakatipu-send")
+EgetPortals("wakatipu-send")
 EgetPortalsUsers("a0dc64fc-bd30-4e21-b6e1-de4d0592e24a")
 // EgetPortalsSubscriptions("a0dc64fc-bd30-4e21-b6e1-de4d0592e24a")
 // EgetAccountPortalsFilteredByName("Wak")

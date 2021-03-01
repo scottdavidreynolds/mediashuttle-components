@@ -1,6 +1,17 @@
 require('dotenv').config()
 const axios = require('axios');
-const constants = require('./constants');
+const config = require('./config');
+
+async function callApi (params) {
+   params.headers = { Authorization: config.MS_API_KEY }
+   let response
+   try {
+      response = await axios(params)
+   } catch (error) {
+      return error
+   }
+   return response
+}
 
 // https://app.swaggerhub.com/apis-docs/Signiant/MediaShuttle/
 // Portals Endpoints
@@ -11,26 +22,33 @@ exports.getPortals = async (portalUrl) => {
          portalUrl += '.mediashuttle.com'
       }
    }
-   let portals = await axios({
+
+   let params = {
       method: 'GET',
-      baseURL: constants.apiUrl + '/portals',
-      params: { url: portalUrl },
-      headers: { Authorization: constants.MS_API_KEY }
-   }).catch(error => {
+      baseURL: config.apiUrl + '/portals',
+      params: { url: portalUrl }
+   }
+
+   try {
+      result = await callApi(params)
+      return {data: result.data.items}
+   } catch (error) {
       return {error: error.response.statusText}
-   })
-   return {data: portals.data.items}
+   }
 }
 
 exports.getPortalsUsers = async (portalId) => {
-   let portalsUsers = await axios({
+   let params = {
       method: 'GET',
-      baseURL: constants.apiUrl + '/portals/' + portalId + '/users',
-      headers: { Authorization: constants.MS_API_KEY }
-   }).catch(error => {
+      baseURL: config.apiUrl + '/portals/' + portalId + '/users',
+   }
+   
+   try {
+      result = await callApi(params)
+      return {data: result.data.items}
+   } catch (error) {
       return {error: error.response.statusText}
-   })
-   return {data: portalsUsers.data.items}
+   }
 }
 
 // System-to-Person
@@ -39,9 +57,9 @@ exports.getPortalsUsers = async (portalId) => {
 exports.postPortalsPackages = async (portalId) => {
    let packageId = await axios({
       method: 'POST',
-      baseURL: constants.apiUrl + '/portals/',
+      baseURL: config.apiUrl + '/portals/',
       url: portalId + '/packages',
-      headers: { Authorization: constants.MS_API_KEY }
+      headers: { Authorization: config.MS_API_KEY }
    }).catch(error => {
       return {error: error.response.statusText}
    })
@@ -52,8 +70,8 @@ exports.postPortalsPackages = async (portalId) => {
 exports.getPortalsPackages = async (portalId, packageId) => {
    let portalsPackages = await axios({
       method: 'GET',
-      baseURL: constants.apiUrl + '/portals/' + portalId + '/packages/' + packageId,
-      headers: { Authorization: constants.MS_API_KEY }
+      baseURL: config.apiUrl + '/portals/' + portalId + '/packages/' + packageId,
+      headers: { Authorization: config.MS_API_KEY }
    }).catch(error => {
       return {error: error.response.statusText}
    })
@@ -64,8 +82,8 @@ exports.getPortalsPackages = async (portalId, packageId) => {
 exports.putPortalsPackagesFiles = async (portalId, packageId, files) => {
    let fileResults = await axios({
       method: 'PUT',
-      baseURL: constants.apiUrl + '/portals/' + portalId + '/packages/' + packageId + '/files',
-      headers: { Authorization: constants.MS_API_KEY },
+      baseURL: config.apiUrl + '/portals/' + portalId + '/packages/' + packageId + '/files',
+      headers: { Authorization: config.MS_API_KEY },
       data: { files }
    }).catch(error => {
       return {error: error.response.statusText}
@@ -128,9 +146,9 @@ exports.generateWebToken = async (params) => {
 
    let options = {
       method: 'POST',
-      baseURL: constants.apiUrl + '/portals/',
+      baseURL: config.apiUrl + '/portals/',
       url: portalId + '/packages/' + packageId + '/tokens',
-      headers: { Authorization: constants.MS_API_KEY },
+      headers: { Authorization: config.MS_API_KEY },
       data: {
          user: { email: userEmail },
          expiresOn: expiration,
@@ -163,8 +181,8 @@ exports.generateWebToken = async (params) => {
 exports.getPortalsSubscriptions = async (portalId) => {
    let getPortalsSubscriptions = await axios({
       method: 'GET',
-      baseURL: constants.apiUrl + '/portals/' + portalId + '/subscriptions',
-      headers: { Authorization: constants.MS_API_KEY }
+      baseURL: config.apiUrl + '/portals/' + portalId + '/subscriptions',
+      headers: { Authorization: config.MS_API_KEY }
    }).catch(error => {
       return (error)
    })
