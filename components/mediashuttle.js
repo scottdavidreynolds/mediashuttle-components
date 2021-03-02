@@ -31,6 +31,7 @@ exports.getPortals = async (portalUrl) => {
 
    try {
       result = await callApi(params)
+      // console.log('result', result)
       return {data: result.data.items}
    } catch (error) {
       return {error: error.response.statusText}
@@ -38,6 +39,7 @@ exports.getPortals = async (portalUrl) => {
 }
 
 exports.getPortalsUsers = async (portalId) => {
+   // console.log('portalId', portalId)
    let params = {
       method: 'GET',
       baseURL: config.apiUrl + '/portals/' + portalId + '/users',
@@ -47,6 +49,7 @@ exports.getPortalsUsers = async (portalId) => {
       result = await callApi(params)
       return {data: result.data.items}
    } catch (error) {
+      // console.log('error', error)
       return {error: error.response.statusText}
    }
 }
@@ -63,7 +66,7 @@ exports.postPortalsPackages = async (portalId) => {
    }).catch(error => {
       return {error: error.response.statusText}
    })
-   return {data: packageId}
+   return {data: packageId.data.id}
 }
 
 // Retrieve package details
@@ -94,73 +97,78 @@ exports.putPortalsPackagesFiles = async (portalId, packageId, files) => {
 
 // Generate webtoken for upload or download
 exports.generateWebToken = async (params) => {
-
+   
    let { portalId, portalUrl, packageId, userEmail, grants, expiration, destinationPath, files, webhook } = params;
-
+   
    if (!portalId && !portalUrl) {
       console.log('error: portalId or portalUrl is required')
-      return ('error: portalId or portalUrl is required')
+      return ({error: 'portalId or portalUrl is required'})
    }
    
    if (!userEmail) {
       console.log('error: user email required')
+      return ({error: 'user email required'})
    }
    
-   if (!destinationPath) {
-      destinationPath = '/signiant'
+   if (grants === 'upload' && !files) {
+      return ({error: 'file list and destinationPath required for upload grants'})
    }
    
    if (!expiration) {
       console.log('error: expiration required')
+      return ({error: 'expiration required'})
    }
    
    if (!portalId) {
       try {
          portalDetails = await exports.getPortals(portalUrl)
-         portalId = portalDetails[0].id
+         portalId = portalDetails.data[0].id
       } catch (error) {
          return ({ error })
       }
    }
    
-   if (!packageId) {
-      try {
-         packageIdDetails = await exports.postPortalsPackages(portalId)
-         packageId = packageIdDetails.data.id
-      } catch (error) {
-         return ({ error })
+   const generatePackageId = async () => {
+      if (packageId) {
+         return packageId
+      } else {
+         try {
+            packageIdDetails = await exports.postPortalsPackages(portalId)
+            if (grants[0] === "download") {
+               await exports.putPortalsPackagesFiles(portalId, packageIdDetails.data, files)
+            }
+            return packageIdDetails.data
+         } catch (error) {
+            return ({ error })
+         }
       }
    }
+   const refPackageId = await generatePackageId()
    
-   if (grants === ['download'] && !files) {
-      console.log('error: file list required for download')
-   }
-
-   if (grants[0] === "download") {
-      try {
-         await exports.putPortalsPackagesFiles(portalId, packageId, files)
-      } catch (error) {
-         return ({ error })
-      }
-   }
-
    let options = {
       method: 'POST',
       baseURL: config.apiUrl + '/portals/',
-      url: portalId + '/packages/' + packageId + '/tokens',
+      url: portalId + '/packages/' + refPackageId + '/tokens',
       headers: { Authorization: config.MS_API_KEY },
       data: {
          user: { email: userEmail },
          expiresOn: expiration,
-         destinationPath,
-         grants,
-         notifications: [
+         grants
+      }
+   }
+
+   if (grants === ['upload']) {
+      options.destinationPath = destinationPath
+   }
+
+   if (webhook) {
+      options.data.notifications =
+         [
             {
                type: 'webhook',
                url: webhook
             }
          ]
-      }
    }
 
    let url;
@@ -170,8 +178,7 @@ exports.generateWebToken = async (params) => {
             url = data.data.url
          })
    } catch (error) {
-      return {error: error.response.statusText}
-
+      return ({error: error.response.statusText})
    }
    return {data: url}
 }
