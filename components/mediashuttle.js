@@ -94,6 +94,18 @@ exports.putPortalsPackagesFiles = async (portalId, packageId, files) => {
    return {data: fileResults}
 }
 
+// Get files from a package
+exports.getPortalsPackagesFiles = async (portalId, packageId) => {
+   let fileResults = await axios({
+      method: 'GET',
+      baseURL: config.apiUrl + '/portals/' + portalId + '/packages/' + packageId + '/files',
+      headers: { Authorization: config.MS_API_KEY }
+   }).catch(error => {
+      return {error: error.response.statusText}
+   })
+   return {data: fileResults}
+}
+
 
 // Generate webtoken for upload or download
 exports.generateWebToken = async (params) => {
