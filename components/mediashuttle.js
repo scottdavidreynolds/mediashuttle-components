@@ -103,7 +103,7 @@ exports.getPortalsPackagesFiles = async (portalId, packageId) => {
    }).catch(error => {
       return {error: error.response.statusText}
    })
-   return {data: fileResults}
+   return {data: fileResults.data.files}
 }
 
 
@@ -188,9 +188,11 @@ exports.generateWebToken = async (params) => {
       await axios(options)
          .then(data => {
             url = data.data.url
+            console.log('data', data)
          })
    } catch (error) {
-      return ({error: error.response.statusText})
+      console.log('token error', error)
+      return ({error: error.data.message})
    }
    return {data: url}
 }
