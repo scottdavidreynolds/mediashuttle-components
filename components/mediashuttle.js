@@ -31,7 +31,6 @@ exports.getPortals = async (portalUrl) => {
 
    try {
       result = await callApi(params)
-      // console.log('result', result)
       return {data: result.data.items}
    } catch (error) {
       return {error: error.response.statusText}
@@ -39,7 +38,6 @@ exports.getPortals = async (portalUrl) => {
 }
 
 exports.getPortalsUsers = async (portalId) => {
-   // console.log('portalId', portalId)
    let params = {
       method: 'GET',
       baseURL: config.apiUrl + '/portals/' + portalId + '/users',
@@ -49,7 +47,6 @@ exports.getPortalsUsers = async (portalId) => {
       result = await callApi(params)
       return {data: result.data.items}
    } catch (error) {
-      // console.log('error', error)
       return {error: error.response.statusText}
    }
 }
@@ -188,10 +185,8 @@ exports.generateWebToken = async (params) => {
       await axios(options)
          .then(data => {
             url = data.data.url
-            console.log('data', data)
          })
    } catch (error) {
-      console.log('token error', error)
       return ({error: error.data.message})
    }
    return {data: url}
