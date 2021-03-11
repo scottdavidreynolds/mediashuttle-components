@@ -1,7 +1,8 @@
 # Javascript modules for interacting with Media Shuttle API
 
 
-## Started June 20 2021. Scott Reynolds, Solution Consultant, Signiant, Inc.
+## Started June 20 2021. 
+### Scott Reynolds, Solution Consultant, Signiant, Inc.
 
 These JS components can be imported into your Media Shuttle projects to perform functions against the published API accessible from https://app.swaggerhub.com/apis-docs/Signiant/MediaShuttle/
 
